@@ -3,15 +3,27 @@ using UnityEngine;
 public class VaultScript : MonoBehaviour
 {
     private bool isOpen = false;
+    private bool isOpening = false;
     public Transform playerCamera;
     public float coneAngle = 40f;
-    public float maxDistance = 4f;
+    public float maxDistance = 7f;
     public GameObject promptUI;
     public GameObject dynamite;
+
+    public float openAngle = 80f;
+    public float openSpeed = 60f;
+
+    private Quaternion openRotation;
+    private Quaternion closedRotation;
+
+    public Transform doorMesh;
 
     void Start()
     {
         promptUI.SetActive(false);
+
+        closedRotation = transform.localRotation;
+        openRotation = Quaternion.Euler(transform.localEulerAngles.x,transform.localEulerAngles.y - openAngle, transform.localEulerAngles.z);;
     }
 
     // Update is called once per frame
@@ -21,12 +33,37 @@ public class VaultScript : MonoBehaviour
             promptUI.SetActive(false);
 
         else
+        {
             promptUI.SetActive(true);
+
+            if(Input.GetKeyDown(KeyCode.E) && !isOpen)
+            {
+                isOpening = true;
+                isOpen = true;
+                promptUI.SetActive(false);
+            }
+        }
+
+        if(isOpening)
+        {
+            transform.localRotation = Quaternion.RotateTowards(transform.localRotation, openRotation, Time.deltaTime * openSpeed);
+
+            if(Quaternion.Angle(transform.localRotation,openRotation) < 0.5f)
+            {
+                transform.rotation = openRotation;
+                isOpening = false;
+            }
+        }
+
+        if(isOpen)
+        {
+            promptUI.SetActive(false);
+        }
     }
     
     bool IsLookingAtDoor()
     {
-        Vector3 toDoor = transform.position - playerCamera.position;
+        Vector3 toDoor = doorMesh.position - playerCamera.position;
         float distance = toDoor.magnitude;
 
         if (distance > maxDistance)
@@ -45,13 +82,13 @@ public class VaultScript : MonoBehaviour
 
         //check if player is in front of the vault (uses vault's Y as forward)
         Vector3 toPlayer = (playerCamera.position - transform.position).normalized;
-        if (Vector3.Dot(transform.up, toPlayer) < 0)
+        if (Vector3.Dot(transform.forward, toPlayer) < 0)
             return false;
 
         //raycast to check obstruction
         if (Physics.Raycast(playerCamera.position, toDoor, out RaycastHit hit, maxDistance))
         {
-            if (hit.transform != transform)
+            if (hit.transform != doorMesh)
                 return false;
         }
 
