@@ -55,7 +55,7 @@ public class CharacterControllerScript : MonoBehaviour
             gold.SetActive(false);
         }
 
-        if (Keyboard.current.wKey.isPressed)
+        if (Keyboard.current.escapeKey.isPressed)
             Application.Quit();
     }
 
