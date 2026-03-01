@@ -38,7 +38,7 @@ public class VaultScript : MonoBehaviour
         {
             promptUI.SetActive(true);
 
-            if(Input.GetKeyDown(KeyCode.E) && !isOpen)
+            if (Input.GetKeyDown(KeyCode.E) && !isOpen && character.hasDynamite == true)
             {
                 isOpening = true;
                 isOpen = true;
