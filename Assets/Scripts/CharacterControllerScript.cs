@@ -1,12 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Windows;
+using UnityEngine.UI;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public class CharacterControllerScript : MonoBehaviour
 {
     private CharacterController controller;
 
-    public float speed = 5.0f;
+    public float speed = 4.0f;
+    public float sprintSpeed = 7.0f;
     public float gravity = -9.8f;
     Vector3 velocity;
 
@@ -21,6 +24,17 @@ public class CharacterControllerScript : MonoBehaviour
     public bool hasGold;
     public GameObject gold;
 
+    public float maxSprint = 8f;
+    public float drainRate = 1f;
+    public float rechargeRate = 0.5f;
+    public float sprintDelay = 2f;
+
+    private float sprint;
+    private float counter;
+
+    public GameObject sprintBar;
+    private Image sprintBarImage;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -28,6 +42,8 @@ public class CharacterControllerScript : MonoBehaviour
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        sprintBarImage = sprintBar.GetComponent<Image>();
     }
 
     // Update is called once per frame
@@ -55,6 +71,10 @@ public class CharacterControllerScript : MonoBehaviour
             gold.SetActive(false);
         }
 
+        Recharge();
+
+        sprintBarImage.fillAmount = sprint / maxSprint;
+
         if (Keyboard.current.escapeKey.isPressed)
             Application.Quit();
     }
@@ -78,7 +98,15 @@ public class CharacterControllerScript : MonoBehaviour
 
         Vector3 move = (transform.right * sideInput + transform.forward * forwardInput).normalized;
 
-        controller.Move(move * speed * Time.deltaTime);
+        if (Keyboard.current.leftShiftKey.isPressed && Keyboard.current.wKey.isPressed && sprint > 0)
+        {
+            controller.Move(move * sprintSpeed * Time.deltaTime);
+            sprint -= drainRate * Time.fixedDeltaTime;
+            counter = 0;
+        } else
+        {
+            controller.Move(move * speed * Time.deltaTime);
+        }
     }
 
     void MouseLook()
@@ -106,5 +134,21 @@ public class CharacterControllerScript : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    void Recharge()
+    {
+        if (sprint >= maxSprint)
+        {
+            sprint = maxSprint;
+            return;
+        }
+
+        counter += Time.fixedDeltaTime;
+
+        if (counter >= sprintDelay)
+        {
+            sprint += rechargeRate * Time.fixedDeltaTime;
+        }
     }
 }
